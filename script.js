@@ -4,6 +4,7 @@ const TIMER_MILLISECONDS = 100
 const SQUARE_SIDE = 25
 
 let videoElem, canvasElem
+let intervals = []
 
 //get All Devices
 async function getAllDevices() {
@@ -14,16 +15,17 @@ async function getAllDevices() {
 //make button lists
 function makeButtonList(devicesList, videoElem, canvasElem) {
     const deviceOptions = document.getElementById('deviceOptions')
-    console.log(devicesList)
+    //console.log(devicesList)
     for (let i = 0; i < devicesList.length; ++i) {
         if (devicesList[i].kind === 'videoinput') {
             let btn = document.createElement('button')
             if (devicesList[i].label !== '')
                 btn.innerText = devicesList[i].label
             else btn.innerText = 'Camera'
-            btn.addEventListener('click', () =>
+            btn.addEventListener('click', () => {
+                intervals.forEach((val) => clearInterval(val))
                 setVideoStream(devicesList[i].deviceId, videoElem, canvasElem)
-            )
+            })
             deviceOptions.append(btn)
         }
     }
@@ -51,9 +53,10 @@ async function setVideoStream(id, videoElem, canvasElem) {
 function canvasVideoPlayback(canvasElem, videoElem) {
     //playback on canvas
     let context = canvasElem.getContext('2d')
-    setInterval(() => {
+    let interval = setInterval(() => {
         context.drawImage(videoElem, 0, 0, WIDTH, HEIGHT)
     }, TIMER_MILLISECONDS)
+    intervals.push(interval)
 }
 
 async function main() {
@@ -85,7 +88,7 @@ function addEventListenerOnVideoElem(videoElem) {
     videoElem.addEventListener('playing', () => {
         const displaySize = { width: WIDTH, height: HEIGHT }
 
-        setInterval(async () => {
+        let interval = setInterval(async () => {
             const detections = await faceapi.detectAllFaces(
                 videoElem,
                 new faceapi.TinyFaceDetectorOptions()
@@ -106,6 +109,8 @@ function addEventListenerOnVideoElem(videoElem) {
             }
             pixelAveraging(boxes)
         }, TIMER_MILLISECONDS)
+
+        intervals.push(interval)
     })
 }
 
